@@ -7,38 +7,205 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(tidyverse)
 library(ggplot2)
 library(readxl)
+library(janitor)
 
 
 ```
 
 
 
-```{r setup}
-
-datasets <- readxl_example("/Users/alicechen/Documents/econometrics/indepedentstudy2023/bankruptcy_statistics.xlsx")
-
-datasets <- readxl_example("bankruptcy_statistics.xlsx")
-read_excel(datasets)
+```{r import}
 
 # Specify sheet either by position or by name
-read_excel(datasets, 2)
-read_excel(datasets, "mtcars")
+dataset <- read_excel("/Users/alicechen/Documents/econometrics/indepedentstudy2023/bankruptcy_statistics.xlsx",4)
 
+# Specify sheet either by position or by name
+districts <- read_excel("/Users/alicechen/Documents/econometrics/indepedentstudy2023/Districts.xlsx")
 
+# Specify sheet either by position or by name
+courtdata <- read_excel("/Users/alicechen/Documents/econometrics/indepedentstudy2023/bankruptcy_data.xlsx")
+  
+courtdata
 
+districts
 
 
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+```{r}
+courtdata <- courtdata %>%
+  filter(value == TRUE) %>%
+  select(-21) %>%
+  select(-c(1, 4, 5))
+  
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+courtdata[4:17] <- lapply(courtdata[4:17], function(x) as.numeric(as.character(x)))
+
+courtdata <- courtdata %>%
+  rename(date = ...2) %>%
+  mutate(date2 = date) %>%
+  separate(date2, c("month", "year")) %>%
+  clean_names() %>%
+  select(last_col(), everything()) %>%
+  select(last_col(), everything())
+  
+  
+new <- courtdata %>%
+  #mutate(districts = substr(region, 1, 1)) %>%
+  left_join(districts, by = "region") %>%
+  select(last_col(), everything())
+
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year, y = total_filing)) +
+  geom_point()
+  
+
+new
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year, y = total_chapter7)) +
+  geom_point()
+
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year, y = total_chapter11)) +
+  geom_point()
+  
+  
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r setup}
+data <- dataset %>% 
+  pivot_longer(cols = 2:191, names_to = "data_type", values_to = "data") %>%
+  mutate(data_type2 = data_type) %>%
+  separate(data_type2, c("month", "year")) %>%
+  clean_names()
+
+
+
+newdata <- left_join(data, districts, by = "jurisdiction")
+
+#newdata %>%
+ # filter(jurisdiction == "VIB") %>%
+  #filter(month == "TOTAL")
+
+unique(newdata$month)
+
+other_only <- newdata %>%
+  filter(month %in% c("TOTAL", "NONCOM", "COM", "CH7", "CH11","CH13", "OTHERCH"))
+
+month_only <- newdata %>%
+  filter(!month %in% c("TOTAL", "NONCOM", "COM", "CH7","CH11", "CH13", "OTHERCH"))
+
+other_only
+month_only
+
+# graph of annual bankrupcies by circuit
+month_only %>%
+  group_by(circuit, year) %>%
+  summarize(total = sum(data)) %>%
+  ggplot(mapping = aes(year, total, colour = circuit)) +
+  geom_point()
+
+# graph of annual bankrupcies by month
+month_only %>%
+  group_by(circuit, month) %>%
+  summarize(total = sum(data)) %>%
+  ggplot(mapping = aes(month, total, colour = circuit)) +
+  geom_point()
+
+# graph of annual bankrupcies by circuit and bk type
+other_only %>%
+  group_by(circuit, month) %>%
+  summarize(total = sum(data)) %>%
+  ggplot(mapping = aes(month, total, colour = circuit)) +
+  geom_point()
+
+# graph of annual bankrupcies by circuit and bk type
+other_only %>%
+  group_by(circuit, month) %>%
+  summarize(total = sum(data)) %>%
+  ggplot(mapping = aes(month, total, colour = circuit)) +
+  geom_point()
+
+other_only %>%
+  drop_na() %>%
+  group_by(month, year) %>%
+  summarize(total = sum(data)) %>%
+  ggplot(mapping = aes(month, total, colour = year)) +
+  geom_point()
+
+
+# total to circuit to year, by com and noncom
+other_only %>%
+  drop_na() %>%
+  group_by(month, year, circuit) %>%
+  summarize(total = sum(data)) %>%
+  filter(month == "COM") %>%
+  ggplot(mapping = aes(circuit, total, colour = year)) +
+  geom_point()
+
+other_only %>%
+  drop_na() %>%
+  group_by(month, year, circuit) %>%
+  summarize(total = sum(data)) %>%
+  filter(month == "NONCOM") %>%
+  ggplot(mapping = aes(circuit, total, colour = year)) +
+  geom_point()
+
+
+other_only %>%
+  drop_na() %>%
+  group_by(month, year, circuit) %>%
+  summarize(total = sum(data)) %>%
+  filter(month == "COM") %>%
+  filter(circuit %in% c(9, 5)) %>%
+  ggplot(mapping = aes(year, total, colour = circuit)) +
+  geom_point()
+
+other_only %>%
+  drop_na() %>%
+  group_by(month, year, circuit) %>%
+  summarize(total = sum(data)) %>%
+  filter(month == "NONCOM") %>%
+  filter(circuit %in% c(9, 5)) %>%
+  ggplot(mapping = aes(year, total, colour = circuit)) +
+  geom_point()
+
+other_only %>%
+  drop_na() %>%
+  group_by(month, year, circuit) %>%
+  summarize(total = sum(data)) %>%
+  filter(month == "CH11") %>%
+ # filter(circuit %in% c(9, 5)) %>%
+  ggplot(mapping = aes(year, total, colour = circuit)) +
+  geom_point()
+
+other_only %>%
+  drop_na() %>%
+  group_by(month, year, circuit) %>%
+  summarize(total = sum(data)) %>%
+  filter(month == "NONCOM") %>%
+#  filter(circuit %in% c(9, 5)) %>%
+  ggplot(mapping = aes(year, total, colour = circuit)) +
+  geom_point()
+
+
+unique(newdata$year)
+other_only
+dataset
+summary(data)
+
+districts <- as_tibble(unique(data$jurisdiction))
+```
+
+
+
+
