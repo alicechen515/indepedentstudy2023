@@ -37,7 +37,7 @@ districts
 ```
 
 
-```{r data structures}
+```{r datastructures}
 courtdata <- courtdata %>%
   filter(value == TRUE) %>%
   select(-21) %>%
@@ -136,7 +136,7 @@ new %>%
  
  
  
-```{r setup}
+```{r setup2}
 data <- dataset %>% 
   pivot_longer(cols = 2:191, names_to = "data_type", values_to = "data") %>%
   mutate(data_type2 = data_type) %>%
