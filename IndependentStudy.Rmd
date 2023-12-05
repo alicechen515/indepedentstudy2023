@@ -18,8 +18,14 @@ library(readxl)
 
 ```{r setup}
 
-read_xls()
+datasets <- readxl_example("/Users/alicechen/Documents/econometrics/indepedentstudy2023/bankruptcy_statistics.xlsx")
 
+datasets <- readxl_example("bankruptcy_statistics.xlsx")
+read_excel(datasets)
+
+# Specify sheet either by position or by name
+read_excel(datasets, 2)
+read_excel(datasets, "mtcars")
 
 
 
