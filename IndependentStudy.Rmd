@@ -37,7 +37,7 @@ districts
 ```
 
 
-```{r}
+```{r data structures}
 courtdata <- courtdata %>%
   filter(value == TRUE) %>%
   select(-21) %>%
@@ -54,11 +54,39 @@ courtdata <- courtdata %>%
   select(last_col(), everything()) %>%
   select(last_col(), everything())
   
-  
+
+
 new <- courtdata %>%
   #mutate(districts = substr(region, 1, 1)) %>%
   left_join(districts, by = "region") %>%
   select(last_col(), everything())
+
+
+  
+new <- new %>%
+  mutate(regional_total = ifelse(grepl("^[0-9]", region), substr(region, 1, 1), FALSE)) %>%
+  select(last_col(), everything())
+
+
+
+
+```
+ 
+ 
+```{r graphs}
+
+# plot circuit non-business chapter 7
+new %>%
+  filter(regional_total != FALSE) %>%
+  ggplot(aes(x = year)) +
+  geom_jitter(aes(y = nonbusiness_chapter_7, color = circuit))
+
+# plot circuit non-business chapter 13  
+new %>%
+  filter(regional_total != FALSE) %>%
+  ggplot(aes(x = year)) +
+  geom_jitter(aes(y = nonbusiness_chapter_13, color = circuit))  
+  
 
 new %>% 
   filter(region == "TOTAL") %>%
@@ -67,20 +95,47 @@ new %>%
   
 
 new
-new %>% 
-  filter(region == "TOTAL") %>%
-  ggplot(aes(x = year, y = total_chapter7)) +
-  geom_point()
 
 new %>% 
   filter(region == "TOTAL") %>%
   ggplot(aes(x = year, y = total_chapter11)) +
   geom_point()
-  
-  
+
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year, y = total_chapter7)) +
+  geom_point()
+
+
+
+# business versus nonbusiness
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year, y = business_total)) +
+  geom_point()
+
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year, y = nonbusiness_total)) +
+  geom_point()
+
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year)) +
+  geom_jitter(aes(y = nonbusiness_chapter_7), color = "blue") +  # Plot the first y column
+  geom_jitter(aes(y = nonbusiness_chapter_13), color = "red")    # Plot the second y column
+
+new %>% 
+  filter(region == "TOTAL") %>%
+  ggplot(aes(x = year)) +
+  geom_jitter(aes(y = nonbusiness_chapter_7), color = "blue") +  # Plot the first y column
+  geom_jitter(aes(y = nonbusiness_chapter_13), color = "red")    # Plot the second y column
 
 ```
-
+ 
+ 
+ 
+ 
 ```{r setup}
 data <- dataset %>% 
   pivot_longer(cols = 2:191, names_to = "data_type", values_to = "data") %>%
